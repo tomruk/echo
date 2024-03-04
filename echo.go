@@ -272,7 +272,6 @@ const (
   / __/___/ /  ___
  / _// __/ _ \/ _ \
 /___/\__/_//_/\___/ %s
-High performance, minimalist Go web framework
 %s
 ____________________________________O/_______
                                     O\
