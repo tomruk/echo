@@ -117,6 +117,24 @@ type Context interface {
 	// binds body based on Content-Type header.
 	Bind(i interface{}) error
 
+	// BindHeaders binds headers into provided type `i`.
+	BindHeaders(i interface{}) error
+
+	// BindPathParams binds path parameters into provided type `i`.
+	BindPathParams(i interface{}) error
+
+	// BindQueryParams binds query parameters into provided type `i`.
+	BindQueryParams(i interface{}) error
+
+	// BindJSON binds the request body into provided type `i` as JSON.
+	BindJSON(i interface{}) error
+
+	// BindXML binds the request body into provided type `i` as XML.
+	BindXML(i interface{}) error
+
+	// BindFormData binds the request body into provided type `i` as form data.
+	BindFormData(i interface{}) error
+
 	// Validate validates provided `i`. It is usually called after `Context#Bind()`.
 	// Validator must be registered using `Echo#Validator`.
 	Validate(i interface{}) error
@@ -542,8 +560,30 @@ func (c *DefaultContext) Bind(i interface{}) error {
 	return c.echo.Binder.Bind(c, i)
 }
 
-// Validate validates provided `i`. It is usually called after `Context#Bind()`.
-// Validator must be registered using `Echo#Validator`.
+func (c *DefaultContext) BindHeaders(i interface{}) error {
+	return c.echo.Binder.BindHeaders(c, i)
+}
+
+func (c *DefaultContext) BindPathParams(i interface{}) error {
+	return c.echo.Binder.BindPathParams(c, i)
+}
+
+func (c *DefaultContext) BindQueryParams(i interface{}) error {
+	return c.echo.Binder.BindQueryParams(c, i)
+}
+
+func (c *DefaultContext) BindJSON(i interface{}) error {
+	return c.echo.Binder.BindJSON(c, i)
+}
+
+func (c *DefaultContext) BindXML(i interface{}) error {
+	return c.echo.Binder.BindXML(c, i)
+}
+
+func (c *DefaultContext) BindFormData(i interface{}) error {
+	return c.echo.Binder.BindFormData(c, i)
+}
+
 func (c *DefaultContext) Validate(i interface{}) error {
 	if c.echo.Validator == nil {
 		return ErrValidatorNotRegistered

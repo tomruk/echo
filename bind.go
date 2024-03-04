@@ -14,6 +14,12 @@ import (
 // Binder is the interface that wraps the Bind method.
 type Binder interface {
 	Bind(c Context, i interface{}) error
+	BindHeaders(c Context, i interface{}) error
+	BindPathParams(c Context, i interface{}) error
+	BindQueryParams(c Context, i interface{}) error
+	BindJSON(c Context, i interface{}) error
+	BindXML(c Context, i interface{}) error
+	BindFormData(c Context, i interface{}) error
 }
 
 // DefaultBinder is the default implementation of the Binder interface.
@@ -117,6 +123,80 @@ func (b *DefaultBinder) Bind(c Context, i interface{}) (err error) {
 		}
 	}
 	return BindBody(c, i)
+}
+
+func (b *DefaultBinder) BindHeaders(c Context, i interface{}) (err error) {
+	return BindHeaders(c, i)
+}
+
+func (b *DefaultBinder) BindPathParams(c Context, i interface{}) (err error) {
+	return BindPathParams(c, i)
+}
+
+func (b *DefaultBinder) BindQueryParams(c Context, i interface{}) (err error) {
+	return BindQueryParams(c, i)
+}
+
+func (b *DefaultBinder) BindJSON(c Context, i interface{}) (err error) {
+	req := c.Request()
+	if req.ContentLength == 0 {
+		return
+	}
+	ctype := req.Header.Get(HeaderContentType)
+	if !strings.HasPrefix(ctype, MIMEApplicationJSON) {
+		return ErrUnsupportedMediaType
+	}
+
+	if err = c.Echo().JSONSerializer.Deserialize(c, i); err != nil {
+		switch err.(type) {
+		case *HTTPError:
+			return err
+		default:
+			return NewHTTPErrorWithInternal(http.StatusBadRequest, err, err.Error())
+		}
+	}
+	return nil
+}
+
+func (b *DefaultBinder) BindXML(c Context, i interface{}) (err error) {
+	req := c.Request()
+	if req.ContentLength == 0 {
+		return
+	}
+	ctype := req.Header.Get(HeaderContentType)
+	if !strings.HasPrefix(ctype, MIMEApplicationXML) {
+		return ErrUnsupportedMediaType
+	}
+
+	if err = xml.NewDecoder(req.Body).Decode(i); err != nil {
+		if ute, ok := err.(*xml.UnsupportedTypeError); ok {
+			return NewHTTPErrorWithInternal(http.StatusBadRequest, err, fmt.Sprintf("Unsupported type error: type=%v, error=%v", ute.Type, ute.Error()))
+		} else if se, ok := err.(*xml.SyntaxError); ok {
+			return NewHTTPErrorWithInternal(http.StatusBadRequest, err, fmt.Sprintf("Syntax error: line=%v, error=%v", se.Line, se.Error()))
+		}
+		return NewHTTPErrorWithInternal(http.StatusBadRequest, err, err.Error())
+	}
+	return nil
+}
+
+func (b *DefaultBinder) BindFormData(c Context, i interface{}) (err error) {
+	req := c.Request()
+	if req.ContentLength == 0 {
+		return
+	}
+	ctype := req.Header.Get(HeaderContentType)
+	if !strings.HasPrefix(ctype, MIMEApplicationForm) {
+		return ErrUnsupportedMediaType
+	}
+
+	values, err := c.FormValues()
+	if err != nil {
+		return NewHTTPErrorWithInternal(http.StatusBadRequest, err, err.Error())
+	}
+	if err = bindData(i, values, "form"); err != nil {
+		return NewHTTPErrorWithInternal(http.StatusBadRequest, err, err.Error())
+	}
+	return nil
 }
 
 // bindData will bind data ONLY fields in destination struct that have EXPLICIT tag
