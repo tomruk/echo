@@ -781,12 +781,13 @@ func (e *Echo) configureServer(s *http.Server) error {
 	e.colorer.SetOutput(e.Logger.Output())
 	s.ErrorLog = e.StdLogger
 	s.Handler = e
-	if e.Debug {
-		e.Logger.SetLevel(log.DEBUG)
-	}
 
 	if !e.HideBanner {
 		e.colorer.Printf(banner, e.colorer.Red("v"+Version), e.colorer.Blue(website))
+	}
+	if e.Debug {
+		e.Logger.SetLevel(log.DEBUG)
+		e.colorer.Printf("⇨ debug mode is %s\n", e.colorer.White("on", color.B))
 	}
 
 	if s.TLSConfig == nil {
