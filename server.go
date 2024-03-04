@@ -80,7 +80,7 @@ func (sc StartConfig) Start(e *Echo) error {
 	if err != nil {
 		return err
 	}
-	return serve(&sc, &server, listener, logger)
+	return serve(&sc, &server, listener, logger, e.Debug)
 }
 
 // StartTLS starts a HTTPS server.
@@ -121,16 +121,16 @@ func (sc StartConfig) StartTLS(e *Echo, certFile, keyFile interface{}) error {
 	if err != nil {
 		return err
 	}
-	return serve(&sc, &s, listener, logger)
+	return serve(&sc, &s, listener, logger, e.Debug)
 }
 
-func serve(sc *StartConfig, server *http.Server, listener net.Listener, logger Logger) error {
+func serve(sc *StartConfig, server *http.Server, listener net.Listener, logger Logger, debug bool) error {
 	if sc.BeforeServeFunc != nil {
 		if err := sc.BeforeServeFunc(server); err != nil {
 			return err
 		}
 	}
-	startupGreetings(sc, logger, listener)
+	startupGreetings(sc, logger, listener, debug)
 
 	if sc.GracefulContext != nil {
 		ctx, cancel := stdContext.WithCancel(sc.GracefulContext)
@@ -169,12 +169,14 @@ func createListener(sc *StartConfig, tlsConfig *tls.Config) (net.Listener, error
 	return listener, nil
 }
 
-func startupGreetings(sc *StartConfig, logger Logger, listener net.Listener) {
+func startupGreetings(sc *StartConfig, logger Logger, listener net.Listener, debug bool) {
 	if !sc.HideBanner {
 		bannerText := fmt.Sprintf(banner, Version)
 		logger.Write([]byte(bannerText))
 	}
-
+	if debug {
+		logger.Write([]byte("debug mode is on"))
+	}
 	if !sc.HidePort {
 		logger.Write([]byte(fmt.Sprintf("http(s) server started on %s", listener.Addr())))
 	}
