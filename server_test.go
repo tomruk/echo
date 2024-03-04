@@ -6,9 +6,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"golang.org/x/net/http2"
 	"io"
 	"log"
 	"net"
@@ -18,6 +15,10 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/net/http2"
 )
 
 func startOnRandomPort(ctx stdContext.Context, e *Echo) (string, error) {
@@ -635,7 +636,7 @@ func TestStartConfig_WithHideBanner(t *testing.T) {
 			}
 			assert.NoError(t, <-errCh)
 
-			contains := strings.Contains(buf.String(), "High performance, minimalist Go web framework")
+			contains := strings.Contains(buf.String(), "https://echo.labstack.com")
 			if tc.hideBanner {
 				assert.False(t, contains)
 			} else {

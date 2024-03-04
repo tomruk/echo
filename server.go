@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	banner = "Echo (v%s). High performance, minimalist Go web framework https://echo.labstack.com"
+	banner = "Echo (v%s). https://echo.labstack.com"
 )
 
 // StartConfig is for creating configured http.Server instance to start serve http(s) requests with given Echo instance
