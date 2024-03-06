@@ -310,6 +310,44 @@ func (e *Echo) ResetRouterCreator(creator func(e *Echo) Router) {
 	e.routers = make(map[string]Router)
 }
 
+func (e *Echo) RouteInfosString() string {
+	buf := strings.Builder{}
+	buf.WriteString("---> Routes\n")
+
+	routes := e.router.Routes()
+	writeRouteInfosString(&buf, routes)
+
+	for _, router := range e.routers {
+		writeRouteInfosString(&buf, router.Routes())
+	}
+	return buf.String()
+}
+
+func writeRouteInfosString(buf io.Writer, routes Routes) {
+	for _, route := range routes {
+		fmt.Fprintf(buf, "  -> Route\n    Method: %s\n    Path: %s\n", route.Method(), route.Path())
+
+		routeInfo, ok := route.(routeInfo)
+		if !ok {
+			continue
+		}
+		route, ok := routeInfo.Route()
+		if !ok {
+			continue
+		}
+
+		fmt.Fprintf(buf, "    Handler: %s\n", HandlerName(route.Handler))
+
+		if len(route.Middlewares) > 0 {
+			fmt.Fprintf(buf, "    Middlewares:\n")
+			for _, middleware := range route.Middlewares {
+				fmt.Fprintf(buf, "      %s\n", MiddlewareName(middleware))
+			}
+		}
+		fmt.Fprintln(buf)
+	}
+}
+
 // DefaultHTTPErrorHandler creates new default HTTP error handler implementation. It sends a JSON response
 // with status code. `exposeError` parameter decides if returned message will contain also error message or not
 //

@@ -31,6 +31,7 @@ func (r Route) ToRouteInfo(params []string) RouteInfo {
 		path:   r.Path,
 		params: append([]string(nil), params...),
 		name:   name,
+		route:  &r,
 	}
 }
 
@@ -57,6 +58,7 @@ type routeInfo struct {
 	path   string
 	params []string
 	name   string
+	route  *Route
 }
 
 func (r routeInfo) Method() string {
@@ -73,6 +75,10 @@ func (r routeInfo) Params() []string {
 
 func (r routeInfo) Name() string {
 	return r.name
+}
+
+func (r routeInfo) Route() (route *Route, ok bool) {
+	return r.route, r.route != nil
 }
 
 // Reverse reverses route to URL string by replacing path parameters with given params values.
@@ -99,8 +105,17 @@ func (r routeInfo) Reverse(params ...interface{}) string {
 	return uri.String()
 }
 
-// HandlerName returns string name for given function.
+// HandlerName returns string name for given handler function.
 func HandlerName(h HandlerFunc) string {
+	t := reflect.ValueOf(h).Type()
+	if t.Kind() == reflect.Func {
+		return runtime.FuncForPC(reflect.ValueOf(h).Pointer()).Name()
+	}
+	return t.String()
+}
+
+// MiddlewareName returns string name for given middleware function.
+func MiddlewareName(h MiddlewareFunc) string {
 	t := reflect.ValueOf(h).Type()
 	if t.Kind() == reflect.Func {
 		return runtime.FuncForPC(reflect.ValueOf(h).Pointer()).Name()
